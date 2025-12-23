@@ -3,6 +3,7 @@ import ast
 import re
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
@@ -19,7 +20,10 @@ if not DATABASE_URL:
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-Engine = create_engine(DATABASE_URL)
+print("DEBUG DATABASE_URL =", DATABASE_URL)
+
+
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -282,14 +286,7 @@ def read_root():
 # -------------------------------------------
 # NEW ENDPOINT: AUTOCOMPLETE SEARCH
 # -------------------------------------------
-@app.get("/search-brands")
-def search_brands(query: str, db: Session = Depends(get_db)):
-    if not query: return []
-    # Search for brands starting with query
-    brands = db.query(Medicine.brand_name)\
-        .filter(Medicine.brand_name.ilike(f"{query}%"))\
-        .order_by(Medicine.brand_name.asc()).limit(8).all()
-    return [b[0] for b in brands]
+# legacy simple /search-brands removed; see consolidated implementation below
 
 # -------------------------------------------
 # NEW: AUTOCOMPLETE SEARCH ENDPOINT
