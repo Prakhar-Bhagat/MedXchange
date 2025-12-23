@@ -3,396 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedXchange | Smart Medicine Savings</title>
+    <title>SaltSwap | Bill Slasher</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --primary: #3b82f6; --primary-dark: #2563eb; 
-            --success: #10b981; --success-dark: #059669; 
-            --danger: #ef4444; --danger-dark: #dc2626; 
-            --warning: #f59e0b; --warning-bg: #fffbeb; --warning-text: #92400e; --warning-border: #fcd34d;
-            --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --text-muted: #64748b; --border: #e2e8f0; 
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: #f8fafc; min-height: 100vh; 
-            display: flex; justify-content: center; align-items: center; 
-            padding: 20px; position: relative; 
-        }
-        
-        body::before { 
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
-            background-image: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%), 
-                              radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%); 
-            pointer-events: none; 
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --border: #e2e8f0;
         }
 
-        .container { 
-            width: 100%; max-width: 500px; background: white; 
-            border-radius: 24px; padding: 40px 32px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
-            position: relative; z-index: 1; border: 1px solid #f1f5f9; 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+            min-height: 100vh; box-sizing: border-box;
         }
 
-        header { text-align: center; margin-bottom: 32px; }
-        h1 { margin: 0; font-weight: 800; color: var(--text); font-size: 2.2rem; letter-spacing: -1px; }
-        .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 8px; font-weight: 500; }
+        .container {
+            width: 100%; max-width: 550px;
+            display: flex; flex-direction: column; gap: 20px;
+            position: relative;
+        }
 
-        /* Search & Autocomplete */
-        .search-container { position: relative; margin-bottom: 28px; }
-        
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 24px; border-radius: 24px;
+            border: 1px solid white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+        .subtitle { color: #64748b; font-size: 0.95rem; margin-top: 4px; font-weight: 500; }
+
+        .search-box {
+            background: white; padding: 10px; border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            display: flex; gap: 10px; position: sticky; top: 10px; z-index: 100;
+            border: 1px solid var(--border);
+        }
         input {
-            width: 100%; padding: 18px 24px; padding-right: 70px;
-            border: 2px solid var(--border); border-radius: 18px;
-            font-size: 1rem; outline: none; transition: all 0.3s;
-            font-family: 'Inter', sans-serif; font-weight: 500;
-            background: white; position: relative; z-index: 2;
+            flex: 1; padding: 14px 20px; border: none; outline: none; font-size: 1rem;
+            border-radius: 14px; background: #f1f5f9; font-family: 'Inter', sans-serif;
         }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        input:focus { background: white; box-shadow: inset 0 0 0 2px var(--primary); }
         
-        .search-container.open input { border-radius: 18px 18px 0 0; border-bottom-color: transparent; }
-
-        .suggestions-list {
-            position: absolute; top: 100%; left: 0; right: 0;
-            background: white; border: 2px solid var(--border); border-top: none;
-            border-radius: 0 0 18px 18px; max-height: 250px; overflow-y: auto;
-            z-index: 10; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            display: none; margin-top: -2px;
+        .add-btn {
+            background: var(--primary); color: white; border: none;
+            padding: 0 24px; border-radius: 14px; cursor: pointer;
+            font-weight: 700; font-size: 0.95rem;
         }
+
+        #cartList { display: flex; flex-direction: column; gap: 12px; padding-bottom: 180px; }
         
-        .suggestion-item {
-            padding: 12px 24px; cursor: pointer; border-bottom: 1px solid #f1f5f9;
-            font-size: 0.95rem; color: var(--text); transition: background 0.2s;
+        .med-card {
+            background: white; padding: 16px 20px; border-radius: 18px;
+            border: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            animation: slideIn 0.3s ease-out; position: relative;
         }
-        .suggestion-item:hover { background: #f8fafc; color: var(--primary); }
-        .suggestion-item:last-child { border-bottom: none; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .search-btn { 
-            position: absolute; right: 6px; top: 6px; 
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); 
-            color: white; border: none; width: 48px; height: 48px; 
-            border-radius: 14px; cursor: pointer; display: flex; 
-            align-items: center; justify-content: center; z-index: 3; 
+        .left-col h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
+        .swap-info { font-size: 0.85rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .badge-gov { background: #dcfce7; color: #15803d; }
+        .badge-pvt { background: #dbeafe; color: #1e40af; }
+
+        .warning-box {
+            background: #fff7ed;
+            border-left: 4px solid #f97316;
+            padding: 8px 10px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #b45309;
+            border-radius: 6px;
+            line-height: 1.4;
         }
-        .search-btn:hover { transform: translateY(-2px); }
 
-        /* Results & Cards */
-        #loading { display: none; text-align: center; padding: 40px 20px; }
-        .spinner { 
-            width: 40px; height: 40px; border: 4px solid var(--border); 
-            border-top-color: var(--primary); border-radius: 50%; 
-            animation: spin 0.8s linear infinite; margin: 0 auto 16px; 
+        .right-col { text-align: right; }
+        .price-row { display: flex; flex-direction: column; align-items: flex-end; }
+        .old-price { text-decoration: line-through; color: #94a3b8; font-size: 0.85rem; }
+        .new-price { color: var(--success); font-weight: 800; font-size: 1.25rem; }
+        .qty-tag { font-size: 0.7rem; color: #94a3b8; margin-top: 2px; }
+
+        .delete-btn {
+            background: #fee2e2; color: #dc2626; border: none;
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        #result { display: none; animation: slideUp 0.5s; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card-row { 
-            background: white; border-radius: 18px; padding: 20px; 
-            margin-bottom: 14px; border: 2px solid var(--border); 
-            position: relative; overflow: hidden; 
-        }
-        .card-row.brand::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--danger); }
-        .card-row.substitute::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--primary); }
-        .card-row.generic::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--success); }
-        
-        .card-row.generic { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
-        .card-row.substitute { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
-
-        .row-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
-        .badge { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; color: white; }
-        .badge-red { background: var(--danger); }
-        .badge-blue { background: var(--primary); }
-        .badge-green { background: var(--success); }
-
-        .card-content { display: flex; justify-content: space-between; align-items: center; }
-        .med-name { font-weight: 700; font-size: 1.15rem; display: block; margin-bottom: 4px; }
-        .med-meta { font-size: 0.85rem; color: var(--text-muted); }
-        .price { font-size: 1.5rem; font-weight: 800; display: block; }
-        .qty { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
-
-        /* Savings Box */
-        .savings-box { 
-            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%); 
-            color: white; padding: 24px; border-radius: 18px; 
-            text-align: center; margin-top: 24px; display: none; 
-        }
-        .savings-amount { font-size: 2.8rem; font-weight: 800; margin: 8px 0; }
-        
-        /* Alerts & Warnings */
-        .error-msg { 
-            text-align: center; padding: 32px; color: var(--danger); 
-            background: #fef2f2; border-radius: 18px; border: 2px solid #fecaca; 
-        }
-        
-        .no-alt-alert {
-            background-color: var(--warning-bg);
-            color: var(--warning-text);
-            border: 1px solid var(--warning-border);
-            padding: 20px; border-radius: 18px; margin: 20px 0;
-            text-align: center; font-size: 0.95rem; line-height: 1.5;
+        .totals-panel {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px;
+            background: #1e293b; color: white;
+            padding: 24px; border-radius: 24px;
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.3);
             display: none;
         }
-        .no-alt-alert strong { display: block; margin-bottom: 6px; font-size: 1.1rem; }
 
-        .dosage-warning { 
-            display: none; margin-top: 12px; padding: 12px; 
-            background: rgba(255,255,255,0.6); border-left: 4px solid var(--warning); 
-            color: #854d0e; font-size: 0.85rem; font-weight: 500; 
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem; }
+        .grand-total-row { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+        .total-label { font-size: 1rem; font-weight: 600; }
+        .total-amount { font-size: 2.2rem; font-weight: 800; color: #4ade80; }
+
+        .map-link {
+            display: block; text-align: center; background: rgba(255,255,255,0.1);
+            color: white; text-decoration: none; padding: 12px; border-radius: 12px;
+            margin-top: 16px; font-weight: 600;
         }
     </style>
 </head>
-<body>
 
+<body>
 <div class="container">
     <header>
-        <h1>MedXchange</h1>
-        <div class="subtitle">Find cheaper alternatives instantly</div>
+        <h1>Bill Slasher</h1>
+        <div class="subtitle">Add medicines to see total savings</div>
     </header>
 
-    <div class="search-container" id="searchContainer">
-        <input 
-            type="text" 
-            id="brandInput" 
-            placeholder="Search medicine (e.g. Dolo, Crocin)..." 
-            onkeypress="handleEnter(event)"
-            oninput="handleInput(this.value)"
-            autocomplete="off"
-        >
-        <button class="search-btn" onclick="searchMedicine()">
-            <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;">
-                <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-            </svg>
-        </button>
-        <div id="suggestions" class="suggestions-list"></div>
+    <div class="search-box">
+        <input type="text" id="inputBox" placeholder="Type medicine..." onkeypress="handleEnter(event)">
+        <button class="add-btn" onclick="addMedicine()">Add</button>
     </div>
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Finding cheaper alternatives...</p>
-    </div>
+    <div id="loader" style="display:none; text-align:center; padding:10px; color:#64748b;">Running Analysis...</div>
 
-    <div id="result">
-        <div class="card-row brand">
-            <div class="row-header"><span class="badge badge-red">Your Search</span></div>
-            <div class="card-content">
-                <div class="med-info"><span class="med-name" id="brandName"></span><span class="med-meta" id="brandMfr"></span></div>
-                <div class="price-block" style="text-align:right;"><span class="price" id="brandPrice"></span><span class="qty" id="brandQty"></span></div>
-            </div>
-        </div>
+    <div id="cartList"></div>
 
-        <div style="text-align:center; margin:20px 0; color:var(--primary); opacity:0.3">
-            <svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:currentColor"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" /></svg>
+    <div class="totals-panel" id="totalsPanel">
+        <div class="summary-row">
+            <span>Market Price</span>
+            <span id="totalMarket">₹0</span>
         </div>
-
-        <div id="noAltAlert" class="no-alt-alert">
-            <strong>No Safe Alternatives Found</strong>
-            We found the brand, but no generic substitutes met our strict safety criteria (Dosage or Ingredient mismatch).
+        <div class="summary-row">
+            <span>Govt/Generic Price</span>
+            <span id="totalGov">₹0</span>
         </div>
-
-        <div class="card-row substitute" id="substituteCard" style="display: none;">
-            <div class="row-header"><span class="badge badge-blue">Better Deal</span></div>
-            <div class="card-content">
-                <div class="med-info"><span class="med-name" id="substituteName"></span><span class="med-meta" id="substituteMfr"></span></div>
-                <div class="price-block" style="text-align:right;"><span class="price" id="substitutePrice"></span><span class="qty" id="substituteQty"></span></div>
-            </div>
+        
+        <div class="grand-total-row">
+            <span class="total-label">TOTAL SAVINGS</span>
+            <span class="total-amount" id="grandSavings">₹0</span>
         </div>
-
-        <div class="card-row generic" id="genericCard" style="display: none;">
-            <div class="row-header"><span class="badge badge-green">Government Generic</span></div>
-            <div class="card-content">
-                <div class="med-info"><span class="med-name" id="genericName"></span><span class="med-meta">Jan Aushadhi Kendras</span></div>
-                <div class="price-block" style="text-align:right;"><span class="price" id="genericPrice"></span><span class="qty" id="genericQty"></span></div>
-            </div>
-            <div class="dosage-warning" id="dosageWarning"></div>
-        </div>
-
-        <div class="savings-box" id="savingsBox">
-            <div style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9;">You Could Save</div>
-            <div class="savings-amount" id="savingsAmount">₹0</div>
-            <div style="font-size:0.9rem; opacity:0.9;" id="savingsDesc"></div>
-            <div style="background:rgba(255,255,255,0.2); border-radius:14px; padding:16px; margin-top:16px; font-size:0.85rem; color:white; text-align:left; line-height:1.6;" id="priceComparison"></div>
-        </div>
+        
+        <a href="https://www.google.com/maps/search/Jan+Aushadhi+Kendra+near+me" target="_blank" class="map-link">
+            📍 Locate Jan Aushadhi Store
+        </a>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    const DETAILS_URL = "https://medxchange-app.onrender.com/get-generic";
-    const SEARCH_URL = "https://medxchange-app.onrender.com/search-brands";
-    let debounceTimer;
+let cart = [];
 
-    // --- AUTOCOMPLETE LOGIC ---
-    async function handleInput(val) {
-        val = val.trim();
-        const container = document.getElementById('searchContainer');
-        const list = document.getElementById('suggestions');
+function handleEnter(e) {
+    if (e.key === 'Enter') addMedicine();
+}
 
-        clearTimeout(debounceTimer);
+async function addMedicine() {
+    const input = document.getElementById('inputBox');
+    const name = input.value.trim();
+    if (!name) return;
 
-        if (val.length < 2) {
-            list.style.display = 'none';
-            container.classList.remove('open');
-            return;
-        }
+    input.value = "";
+    document.getElementById('loader').style.display = 'block';
 
-        debounceTimer = setTimeout(async () => {
-            try {
-                const res = await fetch(`${SEARCH_URL}?query=${encodeURIComponent(val)}`);
-                const brands = await res.json();
-                
-                if (brands && brands.length > 0) {
-                    list.innerHTML = brands.map(brand => 
-                        `<div class="suggestion-item" onclick="selectBrand('${brand.replace(/'/g, "\\'")}')">${brand}</div>`
-                    ).join('');
-                    list.style.display = 'block';
-                    container.classList.add('open');
-                } else {
-                    list.style.display = 'none';
-                    container.classList.remove('open');
-                }
-            } catch (e) {
-                console.error("Autocomplete error:", e);
-            }
-        }, 300); 
-    }
+    try {
+        const res = await fetch(`https://YOUR-RENDER-URL/get-generic?brand_name=${name}`);
+        const data = await res.json();
+        document.getElementById('loader').style.display = 'none';
 
-    function selectBrand(name) {
-        document.getElementById('brandInput').value = name;
-        document.getElementById('suggestions').style.display = 'none';
-        document.getElementById('searchContainer').classList.remove('open');
-        searchMedicine();
-    }
+        if (data.found) {
+            let best = data.gov_match || data.substitute;
 
-    document.addEventListener('click', function(e) {
-        if (!document.getElementById('searchContainer').contains(e.target)) {
-            document.getElementById('suggestions').style.display = 'none';
-            document.getElementById('searchContainer').classList.remove('open');
-        }
-    });
-
-    function handleEnter(event) {
-        if (event.key === 'Enter') {
-            document.getElementById('suggestions').style.display = 'none';
-            searchMedicine();
-        }
-    }
-
-    // --- MAIN SEARCH LOGIC ---
-    async function searchMedicine() {
-        const brandName = document.getElementById('brandInput').value.trim();
-        if (!brandName) { alert('Please enter a medicine name'); return; }
-
-        // UI Reset
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('suggestions').style.display = 'none';
-        
-        // Hide all conditional cards
-        document.getElementById('substituteCard').style.display = 'none';
-        document.getElementById('genericCard').style.display = 'none';
-        document.getElementById('noAltAlert').style.display = 'none';
-        document.getElementById('savingsBox').style.display = 'none';
-
-        try {
-            const response = await fetch(`${DETAILS_URL}?brand_name=${encodeURIComponent(brandName)}`);
-            const data = await response.json();
-
-            document.getElementById('loading').style.display = 'none';
-
-            // 1. Handle "Brand Not Found"
-            if (!data.found) {
-                document.getElementById('result').innerHTML = `
-                    <div class="error-msg">❌ Medicine not found: "${brandName}"<br><small>Try selecting from the dropdown suggestions</small></div>`;
-                document.getElementById('result').style.display = 'block';
+            if (!best) {
+                alert(`Found ${data.searched_brand} but no cheaper alternative.`);
                 return;
             }
-            
-            // Clean up error msg if it exists
-            if(document.querySelector('.error-msg')) {
-                 // Reloading page elements safely without refreshing
-                 // (Simulated by just continuing, since we reset display above)
-            }
 
-            // 2. Populate Brand Info (Always visible)
-            document.getElementById('brandName').textContent = data.searched_brand;
-            document.getElementById('brandPrice').textContent = `₹${data.brand_price}`;
-            document.getElementById('brandQty').textContent = data.brand_qty;
-            document.getElementById('brandMfr').textContent = data.manufacturer;
+            cart.push({
+                id: Date.now(),
+                brandName: data.searched_brand,
+                brandPrice: data.brand_price,
+                brandQty: data.brand_qty,
+                genName: best.name,
+                genPrice: best.price,
+                genQty: best.qty,
+                isGov: Boolean(data.gov_match),
+                dosageWarning: best.dosage_warning || null
+            });
 
-            // 3. Check for Alternatives
-            // If the backend sends 'alternatives_found: false', we trust it.
-            // If it's undefined, we check if sub/gov exists (fallback).
-            const hasAlternatives = (data.alternatives_found === true) || 
-                                    (data.substitute !== null || data.gov_match !== null);
-
-            if (!hasAlternatives) {
-                // SHOW ALERT BOX
-                document.getElementById('noAltAlert').style.display = 'block';
-            } else {
-                // SHOW CARDS
-                
-                // Private Substitute
-                if (data.substitute) {
-                    document.getElementById('substituteName').textContent = data.substitute.name;
-                    document.getElementById('substitutePrice').textContent = `₹${data.substitute.price}`;
-                    document.getElementById('substituteQty').textContent = data.substitute.qty;
-                    document.getElementById('substituteMfr').textContent = data.substitute.manufacturer;
-                    document.getElementById('substituteCard').style.display = 'block';
-                }
-
-                // Government Generic
-                if (data.gov_match) {
-                    document.getElementById('genericName').textContent = data.gov_match.name;
-                    document.getElementById('genericPrice').textContent = `₹${data.gov_match.price}`;
-                    document.getElementById('genericQty').textContent = data.gov_match.qty;
-                    document.getElementById('genericCard').style.display = 'block';
-                    
-                    const warn = document.getElementById('dosageWarning');
-                    if(data.gov_match.dosage_warning) {
-                        warn.textContent = data.gov_match.dosage_warning;
-                        warn.style.display = 'block';
-                    } else { warn.style.display = 'none'; }
-                }
-
-                // Savings Calculation
-                let maxSavings = 0;
-                let comparisonText = '';
-
-                if (data.gov_match && data.substitute) {
-                    if (data.gov_match.price < data.substitute.price) {
-                        maxSavings = data.gov_match.savings;
-                        comparisonText = `<strong>Best Option:</strong> Government generic is cheaper.`;
-                    } else {
-                        maxSavings = data.substitute.savings;
-                        comparisonText = `<strong>Best Option:</strong> Branded alternative is cheaper.`;
-                    }
-                } else if (data.gov_match) {
-                    maxSavings = data.gov_match.savings;
-                    comparisonText = `<strong>Recommendation:</strong> Visit Jan Aushadhi.`;
-                } else if (data.substitute) {
-                    maxSavings = data.substitute.savings;
-                    comparisonText = `<strong>Recommendation:</strong> Switch brand.`;
-                }
-
-                if (maxSavings > 0) {
-                    document.getElementById('savingsAmount').textContent = `₹${maxSavings.toFixed(2)}`;
-                    document.getElementById('priceComparison').innerHTML = comparisonText;
-                    document.getElementById('savingsBox').style.display = 'block';
-                }
-            }
-
-            document.getElementById('result').style.display = 'block';
-
-        } catch (error) {
-            console.error("Fetch error:", error);
-            document.getElementById('loading').style.display = 'none';
+            renderCart();
         }
+
+    } catch (err) {
+        console.error(err);
+        alert("Backend error.");
     }
+}
+
+function remove(id) {
+    cart = cart.filter(x => x.id !== id);
+    renderCart();
+}
+
+function renderCart() {
+    const list = document.getElementById('cartList');
+    const panel = document.getElementById('totalsPanel');
+
+    list.innerHTML = "";
+    if (cart.length === 0) {
+        list.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top:40px;">💊 Add medicines to begin</div>`;
+        panel.style.display = 'none';
+        return;
+    }
+
+    let totalMkt = 0, totalGen = 0;
+
+    cart.forEach(item => {
+        totalMkt += item.brandPrice;
+        totalGen += item.genPrice;
+
+        const div = document.createElement('div');
+        div.className = 'med-card';
+
+        const badge = item.isGov
+            ? `<span class="badge badge-gov">Govt Generic</span>`
+            : `<span class="badge badge-pvt">Private Sub</span>`;
+
+        div.innerHTML = `
+            <div class="left-col">
+                <h3>${item.brandName}</h3>
+
+                <div class="swap-info">
+                    Swap with <b>${item.genName}</b>
+                    ${badge}
+                </div>
+
+                ${item.dosageWarning ? `
+                    <div class="warning-box">${item.dosageWarning}</div>
+                ` : ""}
+            </div>
+
+            <div style="display:flex; align-items:center;">
+                <div class="right-col">
+                    <div class="price-row">
+                        <span class="old-price">₹${item.brandPrice}</span>
+                        <span class="new-price">₹${item.genPrice}</span>
+                    </div>
+                    <div class="qty-tag">${item.genQty}</div>
+                </div>
+                <button class="delete-btn" onclick="remove(${item.id})">✕</button>
+            </div>
+        `;
+
+        list.appendChild(div);
+    });
+
+    document.getElementById('totalMarket').innerText = "₹" + totalMkt.toFixed(2);
+    document.getElementById('totalGov').innerText = "₹" + totalGen.toFixed(2);
+    document.getElementById('grandSavings').innerText = "₹" + (totalMkt - totalGen).toFixed(2);
+
+    panel.style.display = 'block';
+}
 </script>
 
 </body>
