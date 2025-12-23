@@ -48,7 +48,8 @@ class JanAushadhi(Base):
     price = Column(Float)
 
 # Create tables if they don't exist
-Base.metadata.create_all(bind=engine)
+if os.getenv("ENV") == "local":
+    Base.metadata.create_all(bind=engine)
 
 # -------------------------------------------
 # APP & CORS
@@ -67,6 +68,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()      # <- absolutely needed
+        raise
     finally:
         db.close()
 
@@ -217,71 +221,87 @@ def read_root():
 
 @app.get("/search-brands")
 def search_brands(query: str, db: Session = Depends(get_db)):
-    if not query: return []
-    brands = db.query(Medicine.brand_name)\
-        .filter(Medicine.brand_name.ilike(f"{query}%"))\
-        .order_by(Medicine.brand_name.asc())\
-        .distinct().limit(10).all()
-    return [b[0] for b in brands]
+    try:
+        if not query:
+            return []
+
+        brands = (
+            db.query(Medicine.brand_name)
+            .filter(Medicine.brand_name.ilike(f"{query}%"))
+            .order_by(Medicine.brand_name.asc())
+            .distinct()
+            .limit(10)
+            .all()
+        )
+        return [b[0] for b in brands]
+    
+    except Exception as e:
+        db.rollback()
+        raise e
 
 @app.get("/get-generic")
 def get_generic_name(brand_name: str, db: Session = Depends(get_db)):
-    search_term = brand_name
-    clean_input = brand_name.lower().strip()
-    if clean_input in BRAND_ALIASES: search_term = BRAND_ALIASES[clean_input]
+    try:
+        search_term = brand_name
+        clean_input = brand_name.lower().strip()
+        if clean_input in BRAND_ALIASES: search_term = BRAND_ALIASES[clean_input]
 
-    brand_match = db.query(Medicine).filter(Medicine.brand_name.ilike(f"{search_term}%")).order_by(Medicine.brand_name.asc()).first()
-    if not brand_match:
-        brand_match = db.query(Medicine).filter(Medicine.brand_name.ilike(f"%{search_term}%")).order_by(Medicine.brand_name.asc()).first()
+        brand_match = db.query(Medicine).filter(Medicine.brand_name.ilike(f"{search_term}%")).order_by(Medicine.brand_name.asc()).first()
+        if not brand_match:
+            brand_match = db.query(Medicine).filter(Medicine.brand_name.ilike(f"%{search_term}%")).order_by(Medicine.brand_name.asc()).first()
 
-    if not brand_match:
-        return {"found": False, "message": f"No brand found matching '{brand_name}'"}
+        if not brand_match:
+            return {"found": False, "message": f"No brand found matching '{brand_name}'"}
 
-    substitute = db.query(Medicine).filter(
-        Medicine.salt_composition == brand_match.salt_composition,
-        Medicine.id != brand_match.id,
-        Medicine.mrp < brand_match.mrp,
-        Medicine.mrp > 10
-    ).order_by(Medicine.mrp.asc()).first()
+        substitute = db.query(Medicine).filter(
+            Medicine.salt_composition == brand_match.salt_composition,
+            Medicine.id != brand_match.id,
+            Medicine.mrp < brand_match.mrp,
+            Medicine.mrp > 10
+        ).order_by(Medicine.mrp.asc()).first()
 
-    all_salts = extract_all_salts(brand_match.salt_composition)
-    clean_salt_name = all_salts[0] if all_salts else brand_match.salt_composition
-    brand_dosages = extract_dosages(f"{brand_match.salt_composition} {brand_match.brand_name}")
+        all_salts = extract_all_salts(brand_match.salt_composition)
+        clean_salt_name = all_salts[0] if all_salts else brand_match.salt_composition
+        brand_dosages = extract_dosages(f"{brand_match.salt_composition} {brand_match.brand_name}")
+
+        gov_match = find_best_gov_match(all_salts, brand_dosages, db)
+
+        response = {
+            "found": True,
+            "searched_brand": brand_match.brand_name,
+            "brand_price": brand_match.mrp,
+            "brand_qty": get_quantity_label(brand_match.brand_name, brand_match.mrp),
+            "manufacturer": brand_match.manufacturer,
+            "generic_name": clean_salt_name,
+            "substitute": None,
+            "gov_match": None,
+            "alternatives_found": False,
+            "message": "No safe alternatives found."
+        }
+
+        if substitute:
+            response["substitute"] = {
+                "name": substitute.brand_name,
+                "price": substitute.mrp,
+                "qty": get_quantity_label(substitute.brand_name, substitute.mrp),
+                "manufacturer": substitute.manufacturer,
+                "savings": round(brand_match.mrp - substitute.mrp, 2)
+            }
+            response["alternatives_found"] = True
+
+        if gov_match:
+            has_mismatch, warning = has_dosage_mismatch(brand_match.salt_composition, brand_match.brand_name, gov_match.generic_name)
+            response["gov_match"] = {
+                "name": gov_match.generic_name,
+                "price": gov_match.price,
+                "qty": get_quantity_label(gov_match.generic_name, gov_match.price),
+                "savings": round(brand_match.mrp - gov_match.price, 2),
+                "dosage_warning": warning if has_mismatch else None
+            }
+            response["alternatives_found"] = True
+
+        return response
     
-    gov_match = find_best_gov_match(all_salts, brand_dosages, db)
-
-    response = {
-        "found": True,
-        "searched_brand": brand_match.brand_name,
-        "brand_price": brand_match.mrp,
-        "brand_qty": get_quantity_label(brand_match.brand_name, brand_match.mrp),
-        "manufacturer": brand_match.manufacturer,
-        "generic_name": clean_salt_name,
-        "substitute": None,
-        "gov_match": None,
-        "alternatives_found": False,
-        "message": "No safe alternatives found."
-    }
-
-    if substitute:
-        response["substitute"] = {
-            "name": substitute.brand_name,
-            "price": substitute.mrp,
-            "qty": get_quantity_label(substitute.brand_name, substitute.mrp),
-            "manufacturer": substitute.manufacturer,
-            "savings": round(brand_match.mrp - substitute.mrp, 2)
-        }
-        response["alternatives_found"] = True
-
-    if gov_match:
-        has_mismatch, warning = has_dosage_mismatch(brand_match.salt_composition, brand_match.brand_name, gov_match.generic_name)
-        response["gov_match"] = {
-            "name": gov_match.generic_name,
-            "price": gov_match.price,
-            "qty": get_quantity_label(gov_match.generic_name, gov_match.price),
-            "savings": round(brand_match.mrp - gov_match.price, 2),
-            "dosage_warning": warning if has_mismatch else None
-        }
-        response["alternatives_found"] = True
-
-    return response
+    except Exception as e:
+        db.rollback()
+        raise e
