@@ -10,11 +10,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 # -------------------------------------------
 # DATABASE SETUP
 # -------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    # Fallback to local if not on the server
-    DATABASE_URL = "postgresql://pb:mypassw@localhost/saltswap"
+DATABASE_URL = os.getenv("DATABASE_URL", pool_pre_ping=True)
 
 # 2. Fix the URL prefix (Neon/Render use 'postgres://', SQLAlchemy needs 'postgresql://')
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
@@ -357,7 +353,9 @@ def get_generic_name(brand_name: str, db: Session = Depends(get_db)):
         "manufacturer": brand_match.manufacturer,
         "generic_name": clean_salt_name,
         "substitute": None,
-        "gov_match": None
+        "gov_match": None,
+        "alternatives_found": False, # Default to False
+        "message": "No safe alternatives found."
     }
 
     if substitute:
@@ -368,6 +366,7 @@ def get_generic_name(brand_name: str, db: Session = Depends(get_db)):
             "manufacturer": substitute.manufacturer,
             "savings": round(brand_match.mrp - substitute.mrp, 2)
         }
+        response["alternatives_found"] = True
 
     if gov_match:
         # Re-check mismatch for the warning flag in UI (double safety)
@@ -384,5 +383,6 @@ def get_generic_name(brand_name: str, db: Session = Depends(get_db)):
             "savings": round(brand_match.mrp - gov_match.price, 2),
             "dosage_warning": warning if has_mismatch else None
         }
+        response["alternatives_found"] = True
 
     return response
