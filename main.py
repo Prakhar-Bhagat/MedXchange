@@ -13,9 +13,8 @@ from sqlalchemy import text
 # 1. Get the URL
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 2. Fallback for local testing (Do NOT use this in production if possible)
 if not DATABASE_URL:
-    DATABASE_URL = "postgresql://pb:mypassw@localhost/saltswap"
+    raise RuntimeError("DATABASE_URL is not set")
 
 # 3. Fix the URL prefix for Neon/Render compatibility
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
