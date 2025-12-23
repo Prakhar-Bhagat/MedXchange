@@ -34,7 +34,7 @@ Base = declarative_base()
 # MODELS
 # -------------------------------------------
 class Medicine(Base):
-    __tablename__ = "medicines_v2"
+    __tablename__ = "medicines"
     id = Column(Integer, primary_key=True, index=True)
     brand_name = Column(String, index=True)
     salt_composition = Column(String)
