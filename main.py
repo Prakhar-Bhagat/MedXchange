@@ -10,16 +10,24 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 # -------------------------------------------
 # DATABASE SETUP
 # -------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", pool_pre_ping=True)
+# 1. Get the URL (Do NOT put pool_pre_ping here)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 2. Fix the URL prefix (Neon/Render use 'postgres://', SQLAlchemy needs 'postgresql://')
+# 2. Fallback for local testing
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql://pb:mypassw@localhost/saltswap"
+
+# 3. Fix the URL prefix for Neon/Render
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 print("DEBUG DATABASE_URL =", DATABASE_URL)
 
+# 4. CREATE THE ENGINE (This was likely missing or broken)
+# We add pool_pre_ping=True HERE to keep the connection alive
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-engine = create_engine(DATABASE_URL)
+# 5. Create the Session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
