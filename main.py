@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-
+from sqlalchemy import text
 # -------------------------------------------
 # DATABASE SETUP
 # -------------------------------------------
@@ -197,6 +197,16 @@ def find_best_gov_match(salts: list, brand_dosages: list, db: Session):
 # -------------------------------------------
 # ENDPOINTS
 # -------------------------------------------
+@app.get("/fix-db-column")
+def fix_db_column(db: Session = Depends(get_db)):
+    try:
+        # This SQL command manually renames the column in the database
+        db.execute(text("ALTER TABLE medicines RENAME COLUMN standardized_salt TO salt_composition;"))
+        db.commit()
+        return {"status": "success", "message": "✅ Column renamed to 'salt_composition'!"}
+    except Exception as e:
+        return {"status": "error", "message": f"❌ Error: {str(e)} (Column might already be fixed)"}
+
 @app.get("/")
 def read_root():
     # If index.html is in the same folder, this works.
